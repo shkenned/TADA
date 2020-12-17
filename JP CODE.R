@@ -23,9 +23,14 @@ write.csv(money2,"Downloads/new_dataset_report_level", row.names = FALSE)
 TADA_data <- merge(x = money2, y = new_sponsored_bills, by = "client_uuid", all = FALSE)
 write.csv(TADA_data,"Downloads/TADA_data", row.names = FALSE)
 
+#merge with issue codes, this will be the FINAL dataset on the lobby side we will need. 
+TADA_data2 <- merge(x = TADA_data, y = dataset_issue_level_1_, by = "report_uuid", all.x = TRUE)
+write.csv(TADA_data,"Downloads/TADA_data", row.names = FALSE)
+
+
 #add up total lobby for each congressmen
-TADA_data$amount <- as.numeric(as.character(TADA_data$amount)) #makes them all NA's
-congressmen_totals <- TADA_data %>% group_by(client_uuid) %>% sum(TADA_data$amount)
+#TADA_data$amount <- as.numeric(as.character(TADA_data$amount)) #makes them all NA's
+#congressmen_totals <- TADA_data %>% group_by(client_uuid) %>% sum(TADA_data$amount)
   
 
   
