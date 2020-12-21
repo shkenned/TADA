@@ -126,6 +126,7 @@ It is important to note thet in the environemntal-related lobbying chart below w
 ```{r, warning=FALSE}
 env_lobby_graph
 ```
+
 ```{r, warning=FALSE}
 gun_lobby_graph
 ```
@@ -256,7 +257,10 @@ phrase2 <- kwic(tokens, phrase("climate change"))
 #or if we want to look at all phrases that come up in our colloc
 #phrases <- phrase("XXXX", "YYYY")
 #toks <- tokens_compound(tokens, phrases)
+```
 
+
+```{r}
 #Applied to each of our areas of interest
 # First Gun speech
 
@@ -334,8 +338,38 @@ View(dfm_envi_dic)
 dfm_individ <- dfm(dfm, group = "screen_name", dictionary = envi_dic)
 
 View(dfm_individ)
+```
 
-#why are the lists of screen names so small when you view it? Why don't we see the whole list of representatives??!
+```{r}
+full_dic <- dictionary(list(envi = c('climate','environmental protection', 'environmental resources', 'arctic', 'natural resources', 'interior', 'EPA', 'climate*', 'natural disaster', 'natural gas'), guns = c("gun violence", "gun safety",'sense', 'prevent','commonsense gun', 'senseless gun', 'gun lobby', 'gun storage', 'gunviolence prevention', 'unsecured gun', 'gun*'))) 
+
+subdfm_full <- dfm(dfm_party) %>%
+    dfm_select(pattern = full_dic, valuetype = "glob")
+
+features_dfm_full <- textstat_frequency(subdfm_full, n = 40)
+
+# Sort by reverse frequency order
+features_dfm_full$feature <- with(features_dfm_full, reorder(feature, -frequency))
+
+#plot
+dictionary_plot <- ggplot(features_dfm_full, aes(x = feature, y = frequency)) +
+    geom_point() + 
+    theme(axis.text.x = element_text(angle = 90, hjust = 1))+
+  theme_bw()
+
+dictionary_plot
+```
+
+
+```{r}
+my_corp2 <- my_corp
+docnames(my_corp2) <- apply(docvars(my_corp2, c("screen_name", "Party")), 1, paste, collapse = ", ")
+summary(my_corp2, n = 10)
+
+dispersion_plot <- kwic(my_corp2, pattern = "guns") %>%
+    textplot_xray()
+
+dispersion_plot
 ```
 
 ## Lobby Data Code
@@ -403,18 +437,20 @@ money_gun_peryear <- TADA_gun_data %>%
   transmute(Total=sum(amount))
 
 #unique senators with contributions to their name
-df_money_env <- unique(money_env)
-write.csv(money_env,"df_money_env", row.names = FALSE)
+df_money_env <- unique(money_env_totals)
+write.csv(df_money_env,"df_money_env", row.names = FALSE)
 
 df_money_env_peryear <- unique(money_env_peryear)
-write.csv(money_env,"df_money_env_peryear", row.names = FALSE)
+write.csv(df_money_env_peryear,"df_money_env_peryear", row.names = FALSE)
 
-df_money_gun <- unique(money_gun)
-write.csv(money_gun,"Downloads/df_money_gun", row.names = FALSE)
+df_money_gun <- unique(money_gun_totals)
+write.csv(df_money_gun,"df_money_gun", row.names = FALSE)
 
 df_money_gun_peryear <- unique(money_gun_peryear)
-write.csv(money_env,"df_money_gun_peryear", row.names = FALSE)
+write.csv(df_money_gun_peryear,"df_money_gun_peryear", row.names = FALSE)
+```
 
+```{r}
 #plotting the data 
 options(scipen=999)
 
@@ -428,7 +464,6 @@ env_lobby_graph <- ggplot(df_money_env_peryear) +
   scale_color_discrete(name = "Lobby Areas", labels = c("Chemicals", "Energy","Environment","Fuels", "Natural Resources", "Transport"))
 
 
-env_lobby_graph
 
 gun_lobby_graph <- ggplot(df_money_gun_peryear) +
   aes(x = report_year.x, y = Total) +
@@ -438,18 +473,13 @@ gun_lobby_graph <- ggplot(df_money_gun_peryear) +
   scale_x_continuous(name="Lobbying Years", limits=c(2015, 2020)) +
   scale_y_continuous(name="Gun Lobbying Amount", limits=c(0, 25000)) 
   
-gun_lobby_graph
 
 ```
 
 ## Tweet API Code
+```{r, eval=F, echo=T}
 
-<b>
-
-Each team member used Twitter's API to download 25,000 Tweets. In total, we obtained 75,000 tweets from all congressmen of the 115th U.S. Congress.
-
-<body>
-  <p style="color:#FF0000";>api_key1 <- "8iJelpReXMwWR5xUSY6TzrESY"
+api_key1 <- "8iJelpReXMwWR5xUSY6TzrESY"
 api_secret_key1 <- "LRZVxZ3ew0CyP6ixogTfvxr40nOIU0yUfMa1crieTlvvsOmkSD"
 
 token1 <- create_token(
@@ -463,9 +493,62 @@ tmls <- get_timelines(
   handles_top$User, n = 25000)
 
 write.table(tmls, file = "tmls_01-176.csv")
-write.csv()</p>
+write.csv()
+```
 
-<b>
+```{r}
 
+#Create Frequency Plot 
+no_U <- dfm_remove(dfm_party, pattern = c("@*", "U", "#*", "amp", "today", "s*", "", "t", "w", "can", "fe0f"))
+no_U2 <- dfm_remove(no_U, stopwords("en"))
 
+features_dfm_tweets <- textstat_frequency(no_U2, n = 60)
 
+# Sort by reverse frequency order
+features_dfm_tweets$feature <- with(features_dfm_tweets, reorder(feature, -frequency))
+
+twitter_plot2 <- ggplot(features_dfm_tweets, aes(x = feature, y = frequency)) +
+    geom_point() + 
+    theme(axis.text.x = element_text(angle = 90, hjust = 1))
+
+twitter_plot2
+
+```
+
+```{r}
+library(rtweet)
+library(igraph)
+library(hrbrthemes)
+library(ggraph)
+library(tidyverse)
+
+tmls <- read_csv("tmls.csv")
+
+filter(tmls, retweet_count > 0) %>% 
+  select(screen_name, mentions_screen_name) %>%
+  unnest(mentions_screen_name) %>% 
+  filter(!is.na(mentions_screen_name)) %>% 
+  graph_from_data_frame() -> rt_g
+
+V(rt_g)$node_label <- unname(ifelse(degree(rt_g)[V(rt_g)] > 20, names(V(rt_g)), "")) 
+V(rt_g)$node_size <- unname(ifelse(degree(rt_g)[V(rt_g)] > 20, degree(rt_g), 0)) 
+
+twitter_plot <- ggraph(rt_g, layout = 'linear', circular = TRUE) + 
+  geom_edge_arc(edge_width=0.125, aes(alpha=..index..)) +
+  geom_node_label(aes(label=node_label, size=node_size),
+                  label.size=0, fill="#ffffff66", segment.colour="springgreen",
+                  color="slateblue", repel=TRUE, fontface="bold") +
+  coord_fixed() +
+  scale_size_area(trans="sqrt") +
+  labs(title="Retweet Relationships", subtitle="Most retweeted screen names labeled. Darkers edges == more retweets. Node size == larger degree")
+
+twitter_plot
+```
+
+```{r echo=TRUE, message=FALSE, warning=FALSE, paged.print=FALSE, results = "asis"}
+
+#Calculating basic regression without DD method
+reg_basic <- lm(turnout ~ votecenter, d1)
+stargazer(reg_basic, type ="html")
+
+```
