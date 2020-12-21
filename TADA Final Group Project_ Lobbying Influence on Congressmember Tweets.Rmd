@@ -73,26 +73,64 @@ body, td {
 
 # Idea and Research Question  {.tabset .tabset-fade .tabset-pills} 
 
-Understanding of the impact of lobbying on Congressional communication on Twitter
-What can tweets from Representatives in the US tell us about their relationship to lobbying funds, specifically in the field of gun control. 
-We expect that controlling for party, Congresspeople who receive funds from lobbyists on bills they have sponsored related to gun control will tweet both more often about gun regulation issues, and more negatively/positively, depending on the bill. 
+We set out to understand the impact of lobbying on Congressional communication on Twitter. 
+
+What can lobbying funds tell us about Congress members public rhetoric about key issues?
+
+We will look specifically at two fields: the environment and gun control. 
+
+*Hypothesis*: We expect that Congresspeople who receive more funds from lobbyists on bills they have sponsored related to gun control or the environemnt will tweet more often about these respective issues. Moreover, controlling for party, higher lobbying levels will also lead to more negatively/positively charged speech on these issues. 
+
 We chose to work with data from the House of Representatives because they are typically more closely aligned with local interests and are more accountable to them (as they represent a smaller group of citizens) than Senators. 
 
-## Twitter and Lobbying Data
+# DATA  {.tabset .tabset-fade .tabset-pills} 
 
-### Tweet Acquisition:
-Using the Twitter API, we pulled 75,000 (25k/person) Tweets from all 435 Members of the House of Representatives’ official accounts, all coming from the last month (as the tweets were all pulled in late November 2020, this time-frame includes both pre and post-2020 election. During this time frame, no mass-shooting occurred with a fatality count over 4. None of the shootings that occurred gained widespread media coverage, preventing any unnaturally large incidence of firearms-related tweets during this time frame.  
+## TWEETS {.tabset .tabset-fade .tabset-pills} 
 
-We use this data as evidence of the political communication surrounding gun legislation from each congressperson. We assume that Twitter communication mirrors messaging on the issue that is disseminated through other communications channels. 
-Lobby Data Acquisition:
+### *Twitter Data Acquisition*:
+Using the Twitter API, we pulled 75,000 (25k/group member) Tweets from all 435 Members of the House of Representatives’ official accounts. We took a list of Congressmen from the 115th Congress (Jan 2017- Jan 2019). The tweets span from 205 to 2020, as some Congressmen have been in Congress pre-115th Congress and post 115th Congress. We keep these dates in mind throughout the analysis and focus on the 115th Congress (full list of members) but consider pre and post 115th congress data to see Congress members longer speech trends. 
+
+
+We use this data as evidence of the political communication surrounding important issues for the Congress member and his audience, including on gun control and environmental legislation. We assume that there is an incentive for congress members to use Twitter communication to disseminated their views and political interests. 
+
+
+
+## LOBBYING {.tabset .tabset-fade .tabset-pills} 
+
+### *Lobby Data Acquisition*:
 Using data acquired from LobbyView.org, a group dedicated to “advancing data science research in interest group politics,” we were able to determine the amount of money received by congresspeople in 2019 and 2020 per bill that they sponsored. All examined bills were related to gun issues.  
+To explore the influence of lobbying contributions on Twitter speech, we needed lobby monetary contribution data for 1) environment and gun legislation and for 2) individual members of Congress. 
+LobbyView is an open-source website with lobby data for the United States. Their data spans the entire government. We focused on lobbying made to members of the House of Representatives (to match our Twitter data). The original data is sprad over 5 spreadsheets and we focused on gathering the relevant area and segmenting it in order to downsize files and have the specific data necessary for our study. 
+<br>
+
+The Lobby data is linked to bills sponsored in the House of Representatives and we link this money to Congressmen sponsors of the bill. This means that the monetary lobby contriution is not direct to the congress member but encompasses a lobby effort for the sponsored bill in question.
+This link is sufficient since our hypothesis points to these lobbying contributions as influencers of debate on the house floor (sponsored bills) and Congress member's public rhetoric (Tweets). 
+
+Our large lobby dataset contains dozens of variables that help us match data to twitter handles, Congressmen names, lobby firms, house bills, dates, etc.
+For simplicity of our treatment study (effect of lobbying), we segmented this data into two sub-datasets. 
+Both our 'gun' (df_money_gun_peryear) and 'environment' (df_money_env_peryear) lobbying sub-datasets contain the folowing variables:
+
+- `report_year`: year of lobby contributions
+- `congressman_twitter_handle`: Congressman handle for lobby recipient 
+- `amount`(**treatment variable**): the percentage of voters from the total number of eligible registered voters for a given county
+- `issue_code`: the presence of centralized vote center
+<br>
+
+### LOBBYING VISUALIZATION
+
+From the two graphs below, we can see the variation of lobby contributions for sponsors of gun-related bills and sponsors of environemntal-related bills. The gun-related lobbying  for individual Congress members goes up to 25,000 dollars per year, while the environmental-related lobbying for individual Caongress members goes past a million dollars.
+
+It is important to note thet in the environemntal-related lobbying chart below we have included various lobby areas that are linked in some way to the general idea of environment. We expect that most of these areas will have a negative speech effect, or abstinence of pro-environemnt speech, on Congressmen i.e. Chemicals, Fuels, Transport). Environment is the only variable that we expect to have a positive effect on speech pro-environment. Lastly, we expect Energy to be mixed and produce more conversation on the environment but on both negative and positive directions, due to the variance of energy groups across energy sources (some more environmentally-friendly than others).
 
 
-### Lobby Data Organization
+```{r, warning=FALSE}
+env_lobby_graph
+```
+```{r, warning=FALSE}
+gun_lobby_graph
+```
 
-XXX
-
-## ANALYSIS
+# ANALYSIS
 
 Representatives were grouped into three levels (low/medium/high) by how much total money they received from interest groups for all of the examined bills.
 We examined the collocations of the word “gun” and created a dictionary that incorporated those phrases. The amount of documents per user name was 
@@ -101,13 +139,13 @@ We examined the collocations of the word “gun” and created a dictionary that
 We used (what function/process?)_____ to code each tweet along a scale from “Republican” to” Democrat,” under the assumption that Republicans are not supportive of firearm regulation and Democrats are. 
 From this we compared the Representative’s level of funding from interest groups (on sponsored bills) to their tweets average negative-positive sentiment regarding firearms legislation. 
 
-## FINDINGS  
+# FINDINGS  
 
 XXX
 
 # Code {.tabset .tabset-fade .tabset-pills} 
-## TADA Project Code
-
+## TADA Project Code {.tabset .tabset-fade .tabset-pills} 
+### Matching Tweets to Political Party
 ```{r setup, include = FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 
@@ -135,7 +173,7 @@ library(textreadr)
 library(bpa)
 
 ```
-###Matching up MPs with tweets
+
 ```{r}
 
 consolidated_congress_data <- read_delim("consolidated congress data.csv", 
@@ -157,98 +195,8 @@ party <- cbind(party, screen_name)%>%
 data1 <- merge(party, data1, by = "screen_name") 
 ```
 
+### Creating Corpus
 
-## Lobby Data Code
-
-```{r}
-#downsize sponsored bills
-sponsored_bills <- read_delim("sponsored_bills.csv",";", escape_double = FALSE, trim_ws = TRUE)
-new1 <- subset.data.frame(sponsored_bills, sponsored_bills$report_year > "2014")
-new_sponsored_bills <- na.omit(new1, Var = c("congress_id_handles.Tweetcongress"))
-write.csv(new_sponsored_bills,"new_sponsored_bills", row.names = FALSE)
-
-#downsize lobbying contributions file
-dataset_report_level <- read_csv("dataset___report_level.csv")
-money1 <- subset.data.frame(dataset_report_level, dataset_report_level$report_year > "2014") 
-money2 <- subset.data.frame(money1, money1$amount != "$0.00")
-write.csv(money2,"new_dataset_report_level", row.names = FALSE)
-
-#merge amount with congressmen dataset 
-TADA_data <- merge(x = money2, y = new_sponsored_bills, by = "client_uuid", all = FALSE)
-write.csv(TADA_data,"TADA_data", row.names = FALSE)
-
-#downsize issue code lobby data to relevant ones for and environment
-dataset_issue_level <- read_csv("dataset___issue_level.csv")
-issues_env1 <- subset.data.frame(dataset_issue_level, dataset_issue_level$issue_code == list("ENV", "WAS", "TRU", "TRA","FUE","ENG", "NAT", "CAW", "CHM")) 
-issues_env <- subset.data.frame(issues_env1, issues_env1$gov_entity == '{"HOUSE OF REPRESENTATIVES",SENATE}')
-
-#downsize issue code lobby data to relevant ones for and environment
-issues_gun1 <- subset.data.frame(dataset_issue_level, dataset_issue_level$issue_code == "FIR") 
-issues_gun <- subset.data.frame(issues_gun1, issues_gun1$gov_entity == '{"HOUSE OF REPRESENTATIVES",SENATE}')
-
-#DATA ENV : merge with issue codes, this will be the FINAL dataset on the lobby side we will need. 
-TADA_env_data <- merge(x = TADA_data, y = issues_env, by = "report_uuid", all = FALSE)
-write.csv(TADA_env_data,"TADA_env_2015-2020", row.names = FALSE)
-
-#DATA GUN : merge with issue codes, this will be the FINAL dataset on the lobby side we will need. 
-TADA_gun_data <- merge(x = TADA_data, y = issues_gun, by = "report_uuid", all = FALSE)
-write.csv(TADA_gun_data,"TADA_gun_2015-2020", row.names = FALSE)
-
-#add up total lobby for each congressmen dataset
-TADA_gun_data$amount <- as.factor(as.character(TADA_gun_data$amount)) 
-TADA_gun_data$amount <- as.numeric(as.factor(TADA_gun_data$amount)) 
-sapply(TADA_gun_data, class)
-
-
-TADA_env_data$amount <- as.factor(as.character(TADA_env_data$amount)) 
-TADA_env_data$amount <- as.numeric(as.factor(TADA_env_data$amount)) 
-sapply(TADA_env_data, class)
-
-#sum for each congressman lobby money for env
-
-money_env <- TADA_env_data %>%
-  group_by(congress_id_handles.TweetCongress, issue_code) %>% 
-  transmute(Total=sum(amount))
-
-#sum for each congressman lobby money for guns
-money_gun <- TADA_gun_data %>%
-  group_by(congress_id_handles.TweetCongress, issue_code) %>% 
-  transmute(Total=sum(amount))
-
-#unique senators with contributions to their name
-df_money_env <- unique(money_env)
-write.csv(money_env,"congressmen_money_env", row.names = FALSE)
-
-df_money_gun <- unique(money_gun)
-write.csv(money_gun,"congressmen_money_gun", row.names = FALSE)
-```
-
-## Tweet API Code
-
-<b>
-
-Each team member used Twitter's API to download 25,000 Tweets. In total, we obtained 75,000 tweets from all congressmen of the 115th U.S. Congress.
-
-<body>
-  <p style="color:#FF0000";>api_key1 <- "8iJelpReXMwWR5xUSY6TzrESY"
-api_secret_key1 <- "LRZVxZ3ew0CyP6ixogTfvxr40nOIU0yUfMa1crieTlvvsOmkSD"
-
-token1 <- create_token(
-  app = "pesco-app",
-  consumer_key = api_key1,
-  consumer_secret = api_secret_key1)
-
-handles_top <- head(handles2, n=176)
-
-tmls <- get_timelines(
-  handles_top$User, n = 25000)
-
-write.table(tmls, file = "tmls_01-176.csv")
-write.csv()</p>
-
-<b>
-
-###Corpus 
 ```{r}
 
 #Since we only have one relevant text column:
@@ -274,6 +222,10 @@ tokens <- tokens(
   remove_separators = TRUE,
   split_hyphens = TRUE)
 
+```
+
+### Collocations
+```{r}
 # collocation 
 colls <- textstat_collocations(tokens)
 head(colls, 20)
@@ -353,8 +305,8 @@ head(dem_terms, 25)
 ntoken(dfm_party) # words on each side
 ```
 
-###Dictionaries
-####Creating dictionary for Guns
+### Dictionaries
+Creating dictionary for Guns
 ```{r}
 
 #Dictionary using collocations list
@@ -369,7 +321,7 @@ individ_guns <- dfm(dfm_new, dictionary = guns_dic1, group = "screen_name")
 View(individ_guns)
 ```
 
-##Climate Change Dictionary Bit
+Climate Change Dictionary Bit
 
 ```{r}
 envi_dic <- dictionary(list(envi = c('climate*','environmental*protection', 'environmental*resources', 'the*arctic', 'natural*resources', 'interior', 'EPA', 'climate*', 'natural*disaster', 'natural*gas')))
@@ -386,7 +338,134 @@ View(dfm_individ)
 #why are the lists of screen names so small when you view it? Why don't we see the whole list of representatives??!
 ```
 
+## Lobby Data Code
 
+```{r}
+#downsize sponsored bills
+sponsored_bills <- read_delim("sponsored_bills.csv",";", escape_double = FALSE, trim_ws = TRUE)
+new1 <- subset.data.frame(sponsored_bills, sponsored_bills$report_year > "2014")
+new_sponsored_bills <- na.omit(new1, Var = c("congress_id_handles.Tweetcongress"))
+write.csv(new_sponsored_bills,"new_sponsored_bills", row.names = FALSE)
+
+#downsize lobbying contributions file
+dataset_report_level <- read_csv("dataset___report_level.csv")
+money1 <- subset.data.frame(dataset_report_level, dataset_report_level$report_year > "2014") 
+money2 <- subset.data.frame(money1, money1$amount != "$0.00")
+write.csv(money2,"new_dataset_report_level", row.names = FALSE)
+
+#merge amount with congressmen dataset 
+TADA_data <- merge(x = money2, y = new_sponsored_bills, by = "client_uuid", all = FALSE)
+write.csv(TADA_data,"TADA_data", row.names = FALSE)
+
+#downsize issue code lobby data to relevant ones for and environment
+dataset_issue_level <- read_csv("dataset___issue_level.csv")
+issues_env1 <- subset.data.frame(dataset_issue_level, dataset_issue_level$issue_code == list("ENV", "TRA","FUE","ENG", "NAT", "CHM")) 
+issues_env <- subset.data.frame(issues_env1, issues_env1$gov_entity == '{"HOUSE OF REPRESENTATIVES",SENATE}')
+
+#downsize issue code lobby data to relevant ones for and environment
+issues_gun1 <- subset.data.frame(dataset_issue_level, dataset_issue_level$issue_code == "FIR") 
+issues_gun <- subset.data.frame(issues_gun1, issues_gun1$gov_entity == '{"HOUSE OF REPRESENTATIVES",SENATE}')
+
+#DATA ENV : merge with issue codes, this will be the FINAL dataset on the lobby side we will need. 
+TADA_env_data <- merge(x = TADA_data, y = issues_env, by = "report_uuid", all = FALSE)
+write.csv(TADA_env_data,"TADA_env_2015-2020", row.names = FALSE)
+
+#DATA GUN : merge with issue codes, this will be the FINAL dataset on the lobby side we will need. 
+TADA_gun_data <- merge(x = TADA_data, y = issues_gun, by = "report_uuid", all = FALSE)
+write.csv(TADA_gun_data,"TADA_gun_2015-2020", row.names = FALSE)
+
+#add up total lobby for each congressmen dataset
+TADA_gun_data$amount <- as.factor(as.character(TADA_gun_data$amount)) 
+TADA_gun_data$amount <- as.numeric(as.factor(TADA_gun_data$amount)) 
+sapply(TADA_gun_data, class)
+
+
+TADA_env_data$amount <- as.factor(as.character(TADA_env_data$amount)) 
+TADA_env_data$amount <- as.numeric(as.factor(TADA_env_data$amount)) 
+sapply(TADA_env_data, class)
+
+#sum for each congressman lobby money for env
+money_env_totals <- TADA_env_data %>%
+  group_by(congress_id_handles.TweetCongress, issue_code) %>% 
+  transmute(Total=sum(amount))
+
+money_env_peryear <- TADA_env_data %>%
+  group_by(congress_id_handles.TweetCongress, issue_code, report_year.x) %>% 
+  transmute(Total=sum(amount))
+
+#sum for each congressman lobby money for guns
+money_gun_totals <- TADA_gun_data %>%
+  group_by(congress_id_handles.TweetCongress, issue_code) %>% 
+  transmute(Total=sum(amount))
+
+money_gun_peryear <- TADA_gun_data %>%
+  group_by(congress_id_handles.TweetCongress, issue_code, report_year.x) %>% 
+  transmute(Total=sum(amount))
+
+#unique senators with contributions to their name
+df_money_env <- unique(money_env)
+write.csv(money_env,"df_money_env", row.names = FALSE)
+
+df_money_env_peryear <- unique(money_env_peryear)
+write.csv(money_env,"df_money_env_peryear", row.names = FALSE)
+
+df_money_gun <- unique(money_gun)
+write.csv(money_gun,"Downloads/df_money_gun", row.names = FALSE)
+
+df_money_gun_peryear <- unique(money_gun_peryear)
+write.csv(money_env,"df_money_gun_peryear", row.names = FALSE)
+
+#plotting the data 
+options(scipen=999)
+
+env_lobby_graph <- ggplot(df_money_env_peryear) +
+  aes(x = report_year.x, y = Total, color = issue_code, fill=issue_code) +
+  geom_text(aes(label = congress_id_handles.TweetCongress), check_overlap = TRUE,
+  size = 1.8,
+  vjust = -1) +
+  scale_x_continuous(name="Lobbying Years", limits=c(2015, 2020)) +
+  scale_y_continuous(name="Environment Lobbying Amount", limits=c(30000, 100000)) +
+  scale_color_discrete(name = "Lobby Areas", labels = c("Chemicals", "Energy","Environment","Fuels", "Natural Resources", "Transport"))
+
+
+env_lobby_graph
+
+gun_lobby_graph <- ggplot(df_money_gun_peryear) +
+  aes(x = report_year.x, y = Total) +
+  geom_text(aes(label = congress_id_handles.TweetCongress), check_overlap = TRUE,
+  size = 1.8,
+  vjust = -1) +
+  scale_x_continuous(name="Lobbying Years", limits=c(2015, 2020)) +
+  scale_y_continuous(name="Gun Lobbying Amount", limits=c(0, 25000)) 
+  
+gun_lobby_graph
+
+```
+
+## Tweet API Code
+
+<b>
+
+Each team member used Twitter's API to download 25,000 Tweets. In total, we obtained 75,000 tweets from all congressmen of the 115th U.S. Congress.
+
+<body>
+  <p style="color:#FF0000";>api_key1 <- "8iJelpReXMwWR5xUSY6TzrESY"
+api_secret_key1 <- "LRZVxZ3ew0CyP6ixogTfvxr40nOIU0yUfMa1crieTlvvsOmkSD"
+
+token1 <- create_token(
+  app = "pesco-app",
+  consumer_key = api_key1,
+  consumer_secret = api_secret_key1)
+
+handles_top <- head(handles2, n=176)
+
+tmls <- get_timelines(
+  handles_top$User, n = 25000)
+
+write.table(tmls, file = "tmls_01-176.csv")
+write.csv()</p>
+
+<b>
 
 
 
