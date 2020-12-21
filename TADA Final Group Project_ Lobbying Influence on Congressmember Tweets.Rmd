@@ -1,0 +1,392 @@
+---
+title: "TADA: Lobbying Influence on Congressmembers' Tweets"
+author: "Jean Pierre Salendres, Sarah Kennedy, and Michelangelo Freyrie "
+date: "12/21/2020"
+output:
+  html_document:
+    theme: lumen
+    highlight: espresso
+    toc: yes 
+    toc_depth: 2 
+    toc_float: true 
+    number_sections: true
+---
+
+<style type="text/css">
+
+body{ /* Normal  */
+      font-size: 12px;
+  }
+td {  /* Table  */
+  font-size: 8px;
+}
+h1.title {
+  font-size: 38px;
+  color: cornflowerblue;
+}
+h1 { /* Header 1 */
+  font-size: 24px;
+  color: cornflowerblue;
+}
+h2 { /* Header 2 */
+    font-size: 22px;
+  color: DarkBlue;
+}
+h3 { /* Header 3 */
+  font-size: 18px;
+  font-family: "Times New Roman", Times, serif;
+  color: DarkBlue;
+}
+code.r{ /* Code block */
+    font-size: 12px;
+}
+pre { /* Code block - determines code spacing between lines */
+    font-size: 14px;
+}
+</style>
+
+<style>
+.nav>li>a {
+    position: relative;
+    display: block;
+    padding: 10px 15px;
+    color: cornflowerblue;
+}
+.nav-pills>li.active>a, .nav-pills>li.active>a:hover, .nav-pills>li.active>a:focus {
+    color: #ffffff;
+    background-color: cornflowerblue;
+}
+</style>
+
+<style type="text/css">
+#TOC {
+  color: cornflowerblue;
+}
+
+</style>
+<style type="text/css">
+
+body, td {
+   font-size: 16px;
+}
+</style>
+
+# Idea and Research Question  {.tabset .tabset-fade .tabset-pills} 
+
+Understanding of the impact of lobbying on Congressional communication on Twitter
+What can tweets from Representatives in the US tell us about their relationship to lobbying funds, specifically in the field of gun control. 
+We expect that controlling for party, Congresspeople who receive funds from lobbyists on bills they have sponsored related to gun control will tweet both more often about gun regulation issues, and more negatively/positively, depending on the bill. 
+We chose to work with data from the House of Representatives because they are typically more closely aligned with local interests and are more accountable to them (as they represent a smaller group of citizens) than Senators. 
+
+## Twitter and Lobbying Data
+
+### Tweet Acquisition:
+Using the Twitter API, we pulled 75,000 (25k/person) Tweets from all 435 Members of the House of Representatives’ official accounts, all coming from the last month (as the tweets were all pulled in late November 2020, this time-frame includes both pre and post-2020 election. During this time frame, no mass-shooting occurred with a fatality count over 4. None of the shootings that occurred gained widespread media coverage, preventing any unnaturally large incidence of firearms-related tweets during this time frame.  
+
+We use this data as evidence of the political communication surrounding gun legislation from each congressperson. We assume that Twitter communication mirrors messaging on the issue that is disseminated through other communications channels. 
+Lobby Data Acquisition:
+Using data acquired from LobbyView.org, a group dedicated to “advancing data science research in interest group politics,” we were able to determine the amount of money received by congresspeople in 2019 and 2020 per bill that they sponsored. All examined bills were related to gun issues.  
+
+
+### Lobby Data Organization
+
+XXX
+
+## ANALYSIS
+
+Representatives were grouped into three levels (low/medium/high) by how much total money they received from interest groups for all of the examined bills.
+We examined the collocations of the word “gun” and created a dictionary that incorporated those phrases. The amount of documents per user name was 
+
+
+We used (what function/process?)_____ to code each tweet along a scale from “Republican” to” Democrat,” under the assumption that Republicans are not supportive of firearm regulation and Democrats are. 
+From this we compared the Representative’s level of funding from interest groups (on sponsored bills) to their tweets average negative-positive sentiment regarding firearms legislation. 
+
+## FINDINGS  
+
+XXX
+
+# Code {.tabset .tabset-fade .tabset-pills} 
+## TADA Project Code
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+```
+
+```{r, include = FALSE}
+
+library(quanteda)
+library(glmnet)
+library(quanteda)
+library(readtext)
+library(corpus)
+library(tibble)
+library(readr)
+library(dplyr)
+library(xtable)
+library(stm)
+library(rtweet)
+library(tidyverse)
+library(rvest)
+library(pdftools)
+library(stringr)
+library(tm)
+library(textreadr)
+library(bpa)
+
+```
+###Matching up MPs with tweets
+```{r}
+
+consolidated_congress_data <- read_delim("consolidated congress data.csv", 
+    ";", escape_double = FALSE, col_names = FALSE, 
+    trim_ws = TRUE)
+
+data <- read_csv("tmls.csv")
+
+data1 <- mutate(data, date = as.POSIXct(as.numeric(data$created_at), origin = '1970-01-01', tz = 'GMT')) %>% subset(select = -c(status_id, urls_url, reply_count, created_at, quote_count)) %>% subset(date > '2015-01-01')
+
+party <- select(consolidated_congress_data,X1, X3, X10, X11) 
+colnames(party)  <- c("chamber","Party","Lobby_code","handle")
+
+screen_name <- tolower(party$handle) 
+party <- cbind(party, screen_name)%>%
+  na.omit()%>%
+  select(-handle)
+
+data1 <- merge(party, data1, by = "screen_name") 
+```
+
+
+## Lobby Data Code
+
+```{r}
+#downsize sponsored bills
+sponsored_bills <- read_delim("sponsored_bills.csv",";", escape_double = FALSE, trim_ws = TRUE)
+new1 <- subset.data.frame(sponsored_bills, sponsored_bills$report_year > "2014")
+new_sponsored_bills <- na.omit(new1, Var = c("congress_id_handles.Tweetcongress"))
+write.csv(new_sponsored_bills,"new_sponsored_bills", row.names = FALSE)
+
+#downsize lobbying contributions file
+dataset_report_level <- read_csv("dataset___report_level.csv")
+money1 <- subset.data.frame(dataset_report_level, dataset_report_level$report_year > "2014") 
+money2 <- subset.data.frame(money1, money1$amount != "$0.00")
+write.csv(money2,"new_dataset_report_level", row.names = FALSE)
+
+#merge amount with congressmen dataset 
+TADA_data <- merge(x = money2, y = new_sponsored_bills, by = "client_uuid", all = FALSE)
+write.csv(TADA_data,"TADA_data", row.names = FALSE)
+
+#downsize issue code lobby data to relevant ones for and environment
+dataset_issue_level <- read_csv("dataset___issue_level.csv")
+issues_env1 <- subset.data.frame(dataset_issue_level, dataset_issue_level$issue_code == list("ENV", "WAS", "TRU", "TRA","FUE","ENG", "NAT", "CAW", "CHM")) 
+issues_env <- subset.data.frame(issues_env1, issues_env1$gov_entity == '{"HOUSE OF REPRESENTATIVES",SENATE}')
+
+#downsize issue code lobby data to relevant ones for and environment
+issues_gun1 <- subset.data.frame(dataset_issue_level, dataset_issue_level$issue_code == "FIR") 
+issues_gun <- subset.data.frame(issues_gun1, issues_gun1$gov_entity == '{"HOUSE OF REPRESENTATIVES",SENATE}')
+
+#DATA ENV : merge with issue codes, this will be the FINAL dataset on the lobby side we will need. 
+TADA_env_data <- merge(x = TADA_data, y = issues_env, by = "report_uuid", all = FALSE)
+write.csv(TADA_env_data,"TADA_env_2015-2020", row.names = FALSE)
+
+#DATA GUN : merge with issue codes, this will be the FINAL dataset on the lobby side we will need. 
+TADA_gun_data <- merge(x = TADA_data, y = issues_gun, by = "report_uuid", all = FALSE)
+write.csv(TADA_gun_data,"TADA_gun_2015-2020", row.names = FALSE)
+
+#add up total lobby for each congressmen dataset
+TADA_gun_data$amount <- as.factor(as.character(TADA_gun_data$amount)) 
+TADA_gun_data$amount <- as.numeric(as.factor(TADA_gun_data$amount)) 
+sapply(TADA_gun_data, class)
+
+
+TADA_env_data$amount <- as.factor(as.character(TADA_env_data$amount)) 
+TADA_env_data$amount <- as.numeric(as.factor(TADA_env_data$amount)) 
+sapply(TADA_env_data, class)
+
+#sum for each congressman lobby money for env
+
+money_env <- TADA_env_data %>%
+  group_by(congress_id_handles.TweetCongress, issue_code) %>% 
+  transmute(Total=sum(amount))
+
+#sum for each congressman lobby money for guns
+money_gun <- TADA_gun_data %>%
+  group_by(congress_id_handles.TweetCongress, issue_code) %>% 
+  transmute(Total=sum(amount))
+
+#unique senators with contributions to their name
+df_money_env <- unique(money_env)
+write.csv(money_env,"congressmen_money_env", row.names = FALSE)
+
+df_money_gun <- unique(money_gun)
+write.csv(money_gun,"congressmen_money_gun", row.names = FALSE)
+```
+
+## Tweet API Code
+
+<b>
+
+Each team member used Twitter's API to download 25,000 Tweets. In total, we obtained 75,000 tweets from all congressmen of the 115th U.S. Congress.
+
+<body>
+  <p style="color:#FF0000";>api_key1 <- "8iJelpReXMwWR5xUSY6TzrESY"
+api_secret_key1 <- "LRZVxZ3ew0CyP6ixogTfvxr40nOIU0yUfMa1crieTlvvsOmkSD"
+
+token1 <- create_token(
+  app = "pesco-app",
+  consumer_key = api_key1,
+  consumer_secret = api_secret_key1)
+
+handles_top <- head(handles2, n=176)
+
+tmls <- get_timelines(
+  handles_top$User, n = 25000)
+
+write.table(tmls, file = "tmls_01-176.csv")
+write.csv()</p>
+
+<b>
+
+###Corpus 
+```{r}
+
+#Since we only have one relevant text column:
+my_corp <- corpus(data1, 
+                  docid_field = 'X1', text_field = 'text')
+
+#example of 100 characters of first text
+txts <- texts(my_corp)
+substr(txts[1], 1, 100)
+
+#how does our corpus look like
+summary(my_corp, n = 10)
+
+#Key terms in play
+
+tokens <- tokens(
+  my_corp,
+  what = "fasterword",
+  remove_punct = TRUE,
+  remove_symbols = TRUE,
+  remove_numbers = FALSE,
+  remove_url = TRUE,
+  remove_separators = TRUE,
+  split_hyphens = TRUE)
+
+# collocation 
+colls <- textstat_collocations(tokens)
+head(colls, 20)
+
+#three word collocations, do we see trends?
+#coll3 <- textstat_collocations(tokens, tolower = FALSE, size = 3)
+#head(coll3, 30)
+
+#how is gun talked about
+gun1 <- kwic(my_corp, "gun*", window = 10)
+head(gun1, 20)
+
+#how is environment talked about
+env1 <- kwic(my_corp, "environment*", window = 10)
+View(env1)
+
+env2 <- kwic(my_corp, "climate*", window = 8)
+View(env2)
+
+#env3 <- kwic(my_corp, "natural", window =8)
+#View(env3)
+
+#if we want to look at a phrase used in corpus
+phrase1 <- kwic(tokens, phrase("gun violence"))
+
+phrase2 <- kwic(tokens, phrase("climate change"))
+
+#or if we want to look at all phrases that come up in our colloc
+#phrases <- phrase("XXXX", "YYYY")
+#toks <- tokens_compound(tokens, phrases)
+
+#Applied to each of our areas of interest
+# First Gun speech
+
+guns <- kwic(my_corp, "gun*", window = 10)
+
+guns_df <- tibble(screename = guns$docname, 
+                   text = paste(guns$pre, guns$post, sep = " "))
+corp_guns <- corpus(guns_df)
+summary(corp_guns)
+
+#Second for environment speech
+
+env <- kwic(my_corp, "environment*", window = 10)
+
+env_df <- tibble(screename = env$docname, 
+                   text = paste(env$pre, env$post, sep = " "))
+corp_env <- corpus(env_df)
+summary(corp_env)
+
+#we can look at collocations by gun or env segment:
+#guns_wording <- textstat_collocations(corp_guns, size = 2)
+#env_wording <- textstat_collocations(corp_env, size = 4)
+
+#on to a dfm
+dfm <- dfm(my_corp, remove = stopwords("english"), 
+           stem = TRUE, remove_punct = TRUE, remove_numbers = TRUE, remove_symbols = TRUE, split_hyphens = TRUE)
+featnames(dfm)[1:40]
+head(dfm)
+
+#subset to get rid of retweets
+dfm_new <- dfm_subset(dfm, is_retweet == FALSE)
+
+#use of words by party
+corpdfm_party <- dfm(dfm_new, groups = "Party")
+small_corpdfm_party <- dfm_trim(corpdfm_party, min_docfreq = 2) #min 2 times word appears across all docs, cuts data
+
+#frequencies
+dfm_party <- dfm_group(corpdfm_party, "Party")
+
+rep_terms <- textstat_keyness(dfm_party, "Republican")
+head(rep_terms, 25)
+dem_terms <-  textstat_keyness(dfm_party, "Democrat")
+head(dem_terms, 25)
+
+#stats on our groups
+ntoken(dfm_party) # words on each side
+```
+
+###Dictionaries
+####Creating dictionary for Guns
+```{r}
+
+#Dictionary using collocations list
+
+guns_dic1 <- dictionary(list(guns = c('gun*violence', 'gun*safety', 'sense', 'prevent','commonsense*gun', 'senseless*gun', 'gun*lobby', 'gun*storage', 'gunviolence*prevention', 'unsecured*gun', 'gun*')))
+                                     
+#check party dfm against new dictionary
+dfm_party_dic <- dfm(dfm_new, dictionary = guns_dic1, group = "Party")
+View(dfm_party_dic)
+
+individ_guns <- dfm(dfm_new, dictionary = guns_dic1, group = "screen_name")
+View(individ_guns)
+```
+
+##Climate Change Dictionary Bit
+
+```{r}
+envi_dic <- dictionary(list(envi = c('climate*','environmental*protection', 'environmental*resources', 'the*arctic', 'natural*resources', 'interior', 'EPA', 'climate*', 'natural*disaster', 'natural*gas')))
+                                     
+#check party dfm against new dictionary
+dfm_envi_dic <- dfm(dfm, dictionary = envi_dic, group = "Party")
+
+View(dfm_envi_dic)
+
+dfm_individ <- dfm(dfm, group = "screen_name", dictionary = envi_dic)
+
+View(dfm_individ)
+
+#why are the lists of screen names so small when you view it? Why don't we see the whole list of representatives??!
+```
+
+
+
+
+
