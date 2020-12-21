@@ -561,8 +561,34 @@ twitter_plot
 
 ```{r echo=TRUE, message=FALSE, warning=FALSE, paged.print=FALSE, results = "asis"}
 
-#Calculating basic regression without DD method
-reg_basic <- lm(turnout ~ votecenter, d1)
+#data frame matrix from applying gun dictionary and convert to data frame
+
+individ_guns_final <- as.data.frame(
+  individ_guns,
+  row.names = NULL,
+  document = docnames(individ_guns),
+  docid_field = "congress_id_handles.TweetCongress",
+  check.names = FALSE
+)
+
+#data frame matrix from applying env dictionary and comvert to data frame
+
+individ_env_final <- as.data.frame(
+  dfm_individ,
+  row.names = NULL,
+  document = docnames(dfm_individ),
+  docid_field = "congress_id_handles.TweetCongress",
+  check.names = FALSE
+)
+
+
+#Calculating basic regression model to test correlation of our hypothesis 
+#GUN
+reg_basic <- lm(twitter ~ amount + issue_code, df_money_gun_peryear)
 stargazer(reg_basic, type ="html")
+
+#ENVIRONMENT
+reg_basic2 <- lm(twitter ~ amount + issue_code, df_money_env_peryear)
+stargazer(reg_basic2, type ="html")
 
 ```
