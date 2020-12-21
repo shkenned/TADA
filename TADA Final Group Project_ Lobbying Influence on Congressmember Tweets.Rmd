@@ -85,16 +85,6 @@ We chose to work with data from the House of Representatives because they are ty
 
 # DATA  {.tabset .tabset-fade .tabset-pills} 
 
-## TWEETS {.tabset .tabset-fade .tabset-pills} 
-
-### *Twitter Data Acquisition*:
-Using the Twitter API, we pulled 75,000 (25k/group member) Tweets from all 435 Members of the House of Representatives’ official accounts. We took a list of Congressmen from the 115th Congress (Jan 2017- Jan 2019). The tweets span from 205 to 2020, as some Congressmen have been in Congress pre-115th Congress and post 115th Congress. We keep these dates in mind throughout the analysis and focus on the 115th Congress (full list of members) but consider pre and post 115th congress data to see Congress members longer speech trends. 
-
-
-We use this data as evidence of the political communication surrounding important issues for the Congress member and his audience, including on gun control and environmental legislation. We assume that there is an incentive for congress members to use Twitter communication to disseminated their views and political interests. 
-
-
-
 ## LOBBYING {.tabset .tabset-fade .tabset-pills} 
 
 ### *Lobby Data Acquisition*:
@@ -130,6 +120,32 @@ env_lobby_graph
 ```{r, warning=FALSE}
 gun_lobby_graph
 ```
+
+## TWEETS {.tabset .tabset-fade .tabset-pills} 
+
+### *Twitter Data Acquisition*:
+Using the Twitter API, we pulled 75,000 (25k/group member) Tweets from all 435 Members of the House of Representatives’ official accounts. We took a list of Congressmen from the 115th Congress (Jan 2017- Jan 2019). The tweets span from 205 to 2020, as some Congressmen have been in Congress pre-115th Congress and post 115th Congress. We keep these dates in mind throughout the analysis and focus on the 115th Congress (full list of members) but consider pre and post 115th congress data to see Congress members longer speech trends. 
+
+
+We use this data as evidence of the political communication surrounding important issues for the Congress member and his audience, including on gun control and environmental legislation. We assume that there is an incentive for congress members to use Twitter communication to disseminated their views and political interests. 
+
+Below are a few visualizations of the twitter data we have for all Congress members:
+
+Here we see the frquency of words most used in tweets. The terms are quite general and political in nature (america, support, pass, vote, legislation, great, trump, right, care). But these are too broad for our interests.
+```{r, warning=FALSE}
+twitter_plot2
+```
+
+Zooming in to conversation about guns, we see the lexical dispersion for the word "guns" and how it varies in use by congressmen. 
+```{r, warning=FALSE}
+dispersion_plot
+```
+
+Below we can see from our gun-dictionary, the results when applied to our twitter data. 
+```{r, warning=FALSE}
+dictionary_plot
+```
+ 
 
 # ANALYSIS
 
@@ -369,7 +385,6 @@ summary(my_corp2, n = 10)
 dispersion_plot <- kwic(my_corp2, pattern = "guns") %>%
     textplot_xray()
 
-dispersion_plot
 ```
 
 ## Lobby Data Code
@@ -511,7 +526,6 @@ twitter_plot2 <- ggplot(features_dfm_tweets, aes(x = feature, y = frequency)) +
     geom_point() + 
     theme(axis.text.x = element_text(angle = 90, hjust = 1))
 
-twitter_plot2
 
 ```
 
