@@ -153,7 +153,7 @@ Representatives were grouped into three levels (low/medium/high) by how much tot
 We examined the collocations of the word “gun” and created a dictionary that incorporated those phrases. The amount of documents per user name was 
 
 
-We used (what function/process?)_____ to code each tweet along a scale from “Republican” to” Democrat,” under the assumption that Republicans are not supportive of firearm regulation and Democrats are. 
+We looked at the amount of tweets using the keywords for gun and enviornmental legislation, under the assumption that Republicans are not supportive of (and therefore discuss less) firearm regulation or climate policy and Democrats are. 
 From this we compared the Representative’s level of funding from interest groups (on sponsored bills) to their tweets average negative-positive sentiment regarding firearms legislation. 
 
 # FINDINGS  
